@@ -82,7 +82,7 @@ async function getHTMLfromPuppeteerPage(browser, pageUrl, options) {
 
     const html = await page.content();
     if (!html) return 0;
-
+    await page.close();
     return html;
   } catch(err) {
     throw new Error(`Error: Failed to build HTML for ${pageUrl}.\nMessage: ${err}`);
@@ -98,6 +98,19 @@ async function getHTMLfromPuppeteerPage(browser, pageUrl, options) {
  */
 async function runPuppeteer(baseUrl, routes, dir, engine) {
   const browser = await puppeteer.launch(engine.launchOptions);
+
+  var arrays = [], size = 20;
+    
+  for (let i = 0; i < routes.length; i += size)
+     arrays.push(routes.slice(i, i + size));
+  
+  let promiseArr=arrays.map(item=> generatePage(item,browser,baseUrl,dir,engine));
+await Promise.all(promiseArr);
+await browser.close();
+  return;
+}
+
+async function generatePage(routes,browser,baseUrl,dir,engine){
   for (let i = 0; i < routes.length; i++) {
     try {
       console.log(`Processing route "${routes[i]}"`);
@@ -108,9 +121,6 @@ async function runPuppeteer(baseUrl, routes, dir, engine) {
       throw new Error(`Error: Failed to process route "${routes[i]}"\nMessage: ${err}`);
     }
   }
-
-  await browser.close();
-  return;
 }
 
 async function run() {
