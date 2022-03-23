@@ -77,7 +77,19 @@ async function createNewHTMLPage(route, html, dir) {
 async function getHTMLfromPuppeteerPage(browser, pageUrl, options) {
   try {
     const page = await browser.newPage();
-
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      // BLOCK CERTAIN DOMAINS
+      if (request.resourceType() === 'image') {
+        request.abort();
+      }
+      else if ((options.blockedUrls??[]).some(resource => request.url().indexOf(resource) !== -1))
+          {
+            request.abort();
+          }
+      else
+          request.continue();
+    });
     await page.goto(pageUrl, Object.assign({waitUntil: 'networkidle0'}, options));
 
     const html = await page.content();
