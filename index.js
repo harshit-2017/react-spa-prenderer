@@ -76,14 +76,15 @@ async function createNewHTMLPage(route, html, dir) {
  */
 async function getHTMLfromPuppeteerPage(browser, pageUrl, options) {
   try {
-    const page = await browser.newPage();
+    const context = await browser.createIncognitoBrowserContext();
+    const page = await context.newPage();
     await page.setRequestInterception(true);
     page.on('request', (request) => {
       // BLOCK CERTAIN DOMAINS
       if (request.resourceType() === 'image') {
         request.abort();
       }
-      else if ((options.blockedUrls??[]).some(resource => request.url().indexOf(resource) !== -1))
+      else if (options.blockedUrls && options.blockedUrls.length>0 && options.blockedUrls.some(resource => request.url().indexOf(resource) !== -1))
           {
             request.abort();
           }
@@ -111,7 +112,7 @@ async function getHTMLfromPuppeteerPage(browser, pageUrl, options) {
 async function runPuppeteer(baseUrl, routes, dir, engine) {
   const browser = await puppeteer.launch(engine.launchOptions);
 
-  var arrays = [], size = 20;
+  var arrays = [], size = 30;
     
   for (let i = 0; i < routes.length; i += size)
      arrays.push(routes.slice(i, i + size));
